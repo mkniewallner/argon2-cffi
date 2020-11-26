@@ -14,7 +14,15 @@ from . import (
     DEFAULT_PARALLELISM,
     DEFAULT_TIME_COST,
     PasswordHasher,
+    Type,
 )
+
+
+_ARG_TO_TYPE = {
+    "d": Type.D,
+    "i": Type.I,
+    "id": Type.ID,
+}
 
 
 def main(argv):
@@ -34,8 +42,17 @@ def main(argv):
     parser.add_argument(
         "-l", type=int, help="`hash_length`", default=DEFAULT_HASH_LENGTH
     )
+    parser.add_argument(
+        "-v",
+        type=str,
+        help="`variant`",
+        choices=["d", "i", "id"],
+        default="id",
+    )
 
     args = parser.parse_args(argv[1:])
+
+    variant = _ARG_TO_TYPE[args.v]
 
     password = b"secret"
     ph = PasswordHasher(
@@ -43,6 +60,7 @@ def main(argv):
         memory_cost=args.m,
         parallelism=args.p,
         hash_len=args.l,
+        type=variant,
     )
     hash = ph.hash(password)
 
@@ -53,7 +71,13 @@ def main(argv):
         "hash_len": (args.l, "bytes"),
     }
 
-    print("Running Argon2id %d times with:" % (args.n,))
+    print(
+        "Running Argon2%s %d times with:"
+        % (
+            args.v,
+            args.n,
+        )
+    )
 
     for k, v in sorted(six.iteritems(params)):
         print("%s: %d %s" % (k, v[0], v[1]))
@@ -71,12 +95,14 @@ ph = PasswordHasher(
     memory_cost={memory_cost!r},
     parallelism={parallelism!r},
     hash_len={hash_len!r},
+    type={type},
 )
 gc.enable()""".format(
             time_cost=args.t,
             memory_cost=args.m,
             parallelism=args.p,
             hash_len=args.l,
+            type=variant,
         ),
         number=args.n,
     )
